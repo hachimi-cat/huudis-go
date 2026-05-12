@@ -13,7 +13,9 @@ import (
 )
 
 // Client is the high-level SDK surface: JWT verification, OIDC code
-// flow, refresh, userinfo, authz check.
+// flow, refresh, userinfo, authz check, plus the full Huudis admin
+// resource namespaces (IAM, workspaces, MFA, billing, …) accessible as
+// fields. See admin.go for the per-namespace methods.
 type Client struct {
 	Issuer       string
 	ClientID     string
@@ -21,6 +23,21 @@ type Client struct {
 	Audience     string
 	APIBase      string
 	HTTP         *http.Client
+
+	// Admin resource namespaces — mirror the Node + Python SDKs.
+	IAM                  *IamResource
+	IdentityProviders    *IdentityProvidersResource
+	AssumedSessions      *AssumedSessionsResource
+	Authz                *AuthzResource
+	Workspaces           *WorkspacesResource
+	EndUsers             *EndUsersResource
+	MFA                  *MfaResource
+	OidcClients          *OidcClientsResource
+	ConnectedApps        *ConnectedAppsResource
+	Services             *ServicesResource
+	WebhookSubscriptions *WebhookSubscriptionsResource
+	Billing              *BillingResource
+	Account              *AccountResource
 }
 
 // ClientOptions matches the env-var defaults of the Node + Python SDKs.
@@ -58,14 +75,30 @@ func NewClient(opts ClientOptions) (*Client, error) {
 	if opts.HTTP == nil {
 		opts.HTTP = http.DefaultClient
 	}
-	return &Client{
+	c := &Client{
 		Issuer:       strings.TrimRight(opts.Issuer, "/"),
 		ClientID:     opts.ClientID,
 		ClientSecret: opts.ClientSecret,
 		Audience:     opts.Audience,
 		APIBase:      strings.TrimRight(opts.APIBase, "/"),
 		HTTP:         opts.HTTP,
-	}, nil
+	}
+	c.IAM = &IamResource{c: c}
+	c.IdentityProviders = &IdentityProvidersResource{c: c}
+	c.AssumedSessions = &AssumedSessionsResource{c: c}
+	c.Authz = &AuthzResource{c: c}
+	c.Workspaces = &WorkspacesResource{c: c}
+	c.EndUsers = &EndUsersResource{c: c}
+	c.MFA = &MfaResource{c: c}
+	c.OidcClients = &OidcClientsResource{c: c}
+	c.ConnectedApps = &ConnectedAppsResource{c: c}
+	c.Services = &ServicesResource{c: c}
+	c.WebhookSubscriptions = &WebhookSubscriptionsResource{c: c}
+	c.Billing = &BillingResource{c: c}
+	c.Account = &AccountResource{c: c}
+	c.Account.Sessions = &AccountSessionsResource{c: c}
+	c.Account.Linked = &AccountLinkedResource{c: c}
+	return c, nil
 }
 
 // VerifyAccessToken — client-scoped convenience wrapper.

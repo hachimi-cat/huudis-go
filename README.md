@@ -2,14 +2,15 @@
 
 Official Go SDK for [Huudis](https://huudis.com).
 
+`v0.4.0` — full admin API parity with the Node + Python SDKs. Keeps the
+v0.2.0 auth surface (`VerifyAccessToken`, `Client.ExchangeCode`,
+`Client.AuthzCheck`, webhook signature helpers) unchanged.
+
 ## Install
 
 ```bash
-go get github.com/hachimi-cat/huudis-go
+go get github.com/hachimi-cat/huudis-go@v0.4.0
 ```
-
-> We plan to mirror this package to a dedicated `github.com/hachimi-cat/huudis-go`
-> repo for shorter import paths in v0.2.
 
 ## Quickstart
 
@@ -96,17 +97,59 @@ if err != nil || !result.Allow {
 }
 ```
 
+### Admin resources
+
+Every resource group exposed by the Node + Python SDKs is mounted as a
+field on `Client`. Each method takes a `RequestAuth{AuthToken: ...}` to
+attach an admin bearer for that single call.
+
+```go
+client, _ := huudis.NewClient(huudis.ClientOptions{})
+
+// IAM users (cursor pagination)
+page, err := client.IAM.ListUsers(ctx,
+    huudis.ListUsersParams{Limit: 50},
+    huudis.RequestAuth{AuthToken: adminToken})
+
+// Workspaces
+ws, _ := client.Workspaces.Create(ctx,
+    huudis.CreateWorkspaceInput{Name: "Pawpado"},
+    huudis.RequestAuth{AuthToken: adminToken})
+
+// Webhook subscriptions
+sub, _ := client.WebhookSubscriptions.Create(ctx,
+    huudis.CreateWebhookSubscriptionInput{
+        URL:    "https://hook",
+        Events: []string{"huudis.user.created.v1"},
+    },
+    huudis.RequestAuth{AuthToken: adminToken})
+
+// MFA, OIDC clients, billing, account profile, …
+_, _ = client.MFA.ListDevices(ctx, huudis.RequestAuth{AuthToken: adminToken})
+_, _ = client.Billing.Summary(ctx, huudis.RequestAuth{AuthToken: adminToken})
+_ = client.Account.Sessions.Revoke(ctx, "s_1", huudis.RequestAuth{AuthToken: adminToken})
+```
+
+Namespaces on `Client`:
+`IAM`, `IdentityProviders`, `AssumedSessions`, `Authz`, `Workspaces`,
+`EndUsers`, `MFA`, `OidcClients`, `ConnectedApps`, `Services`,
+`WebhookSubscriptions`, `Billing`, `Account` (`.Sessions`, `.Linked`).
+
 ## What's in the box
 
 | Symbol | Purpose |
 |---|---|
 | `VerifyAccessToken(ctx, hdr, VerifyOptions{})` | Package-level — reads `HUUDIS_ISSUER` / `HUUDIS_AUDIENCE` from env. |
-| `Client` / `NewClient(ClientOptions{})` | Full surface — OIDC code flow, refresh, userinfo, authz check. |
+| `Client` / `NewClient(ClientOptions{})` | Full surface — OIDC code flow, refresh, userinfo, authz check, admin namespaces. |
 | `Claims` | Typed view over a Huudis JWT payload. |
-| `*Error` | Single error type; branch on `.Code`. |
+| `RequestAuth{AuthToken}` | Per-call bearer override for admin resource methods. |
+| `VerifyWebhookSignature(...)` | HMAC-SHA256 webhook signature verifier. |
+| `*Error` | Single error type; branch on `.Code` (`UNAUTHORIZED`, `FORBIDDEN`, …). |
 
-JWKS keys are fetched per issuer and cached for one hour (auto-refreshed
-on unknown `kid` to handle rotation).
+The admin resource layer unwraps the Forjio `{data, error, meta}` API
+envelope and surfaces backend error codes through `*Error`. JWKS keys
+are fetched per issuer and cached for one hour (auto-refreshed on
+unknown `kid` to handle rotation).
 
 ## Docs
 
