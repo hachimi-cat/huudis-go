@@ -248,10 +248,10 @@ type BillingSubscription struct {
 }
 
 type BillingUsage struct {
-	Identities         int64  `json:"identities"`
-	AuthzChecks        int64  `json:"authzChecks"`
-	WebhookDeliveries  int64  `json:"webhookDeliveries"`
-	AsOf               string `json:"asOf"`
+	Identities        int64  `json:"identities"`
+	AuthzChecks       int64  `json:"authzChecks"`
+	WebhookDeliveries int64  `json:"webhookDeliveries"`
+	AsOf              string `json:"asOf"`
 }
 
 type BillingInvoice struct {

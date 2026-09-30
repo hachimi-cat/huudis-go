@@ -10,7 +10,11 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
+
+// SDKVersion is this SDK's version.
+const SDKVersion = "0.5.0"
 
 // Client is the high-level SDK surface: JWT verification, OIDC code
 // flow, refresh, userinfo, authz check, plus the full Huudis admin
@@ -38,16 +42,53 @@ type Client struct {
 	WebhookSubscriptions *WebhookSubscriptionsResource
 	Billing              *BillingResource
 	Account              *AccountResource
+
+	// API has every feature route, one method each (generated from the API spec:
+	// api_generated.go). Each call carries the credential its route takes; see
+	// ClientOptions.
+	API *GeneratedAPI
+
+	token           string
+	accessKeyID     string
+	secretAccessKey string
+	workspaceID     string
+	now             func() time.Time
 }
 
 // ClientOptions matches the env-var defaults of the Node + Python SDKs.
+//
+// Credentials, by route: /api/v1/app/* authenticates as your OIDC app (ClientID +
+// ClientSecret, HTTP Basic). Every other call carries, in order, the per-call
+// RequestAuth token, else Token (a signed-in person's bearer), else the access key
+// (AccessKeyID + SecretAccessKey): each request signed Huudis-HMAC-SHA256, acting as
+// the key's user within that user's IAM policies on /account/*, /iam/* and /authz/*.
 type ClientOptions struct {
 	Issuer       string // defaults to HUUDIS_ISSUER
-	ClientID     string // defaults to HUUDIS_CLIENT_ID
+	ClientID     string // defaults to HUUDIS_CLIENT_ID; optional with an access key or token
 	ClientSecret string // defaults to HUUDIS_CLIENT_SECRET; empty for public clients
 	Audience     string // defaults to ClientID
 	APIBase      string // defaults to Issuer
 	HTTP         *http.Client
+
+	// Token is a signed-in person's bearer access token, the default for every
+	// call. Defaults to HUUDIS_TOKEN.
+	Token string
+	// AccessKeyID and SecretAccessKey are an IAM access key, used when there is no
+	// token. Default HUUDIS_ACCESS_KEY_ID and HUUDIS_SECRET_ACCESS_KEY.
+	AccessKeyID     string
+	SecretAccessKey string
+	// WorkspaceID names the workspace to act in (X-Huudis-Workspace-Id). Defaults to
+	// HUUDIS_WORKSPACE_ID, else the caller's first workspace.
+	WorkspaceID string
+	// Now overrides the clock used for signing (tests).
+	Now func() time.Time
+}
+
+func envOr(v, name string) string {
+	if v != "" {
+		return v
+	}
+	return os.Getenv(name)
 }
 
 func NewClient(opts ClientOptions) (*Client, error) {
@@ -60,11 +101,19 @@ func NewClient(opts ClientOptions) (*Client, error) {
 	if opts.ClientSecret == "" {
 		opts.ClientSecret = os.Getenv("HUUDIS_CLIENT_SECRET")
 	}
+	opts.Token = envOr(opts.Token, "HUUDIS_TOKEN")
+	opts.AccessKeyID = envOr(opts.AccessKeyID, "HUUDIS_ACCESS_KEY_ID")
+	opts.SecretAccessKey = envOr(opts.SecretAccessKey, "HUUDIS_SECRET_ACCESS_KEY")
+	opts.WorkspaceID = envOr(opts.WorkspaceID, "HUUDIS_WORKSPACE_ID")
+	if opts.Now == nil {
+		opts.Now = time.Now
+	}
 	if opts.Issuer == "" {
 		return nil, newErr("MISSING_ISSUER", "set HUUDIS_ISSUER env or ClientOptions.Issuer")
 	}
-	if opts.ClientID == "" {
-		return nil, newErr("MISSING_CLIENT_ID", "set HUUDIS_CLIENT_ID env or ClientOptions.ClientID")
+	hasKey := opts.AccessKeyID != "" && opts.SecretAccessKey != ""
+	if opts.ClientID == "" && !hasKey && opts.Token == "" {
+		return nil, newErr("MISSING_CLIENT_ID", "set HUUDIS_CLIENT_ID env or ClientOptions.ClientID (or an access key or token)")
 	}
 	if opts.Audience == "" {
 		opts.Audience = opts.ClientID
@@ -82,7 +131,14 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		Audience:     opts.Audience,
 		APIBase:      strings.TrimRight(opts.APIBase, "/"),
 		HTTP:         opts.HTTP,
+
+		token:           opts.Token,
+		accessKeyID:     opts.AccessKeyID,
+		secretAccessKey: opts.SecretAccessKey,
+		workspaceID:     opts.WorkspaceID,
+		now:             opts.Now,
 	}
+	c.API = &GeneratedAPI{c: c}
 	c.IAM = &IamResource{c: c}
 	c.IdentityProviders = &IdentityProvidersResource{c: c}
 	c.AssumedSessions = &AssumedSessionsResource{c: c}

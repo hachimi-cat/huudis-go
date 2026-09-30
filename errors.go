@@ -8,6 +8,10 @@ import "fmt"
 type Error struct {
 	Code    string
 	Message string
+	// Status is the HTTP status of an API error (0 when no response was read).
+	Status int
+	// RequestID is the API envelope's meta.requestId, when there was one.
+	RequestID string
 }
 
 func (e *Error) Error() string {

@@ -3,6 +3,7 @@ package huudis
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,9 +13,9 @@ import (
 	"strings"
 )
 
-// RequestAuth lets callers override the client-level bearer token for a
-// single resource call. Empty AuthToken keeps the client default
-// (currently: none — admin operations always pass an explicit token).
+// RequestAuth lets callers override the client-level credential with a bearer
+// token for a single resource call. Empty AuthToken keeps the client default:
+// ClientOptions.Token, else the access key (see ClientOptions).
 type RequestAuth struct {
 	AuthToken string
 }
@@ -46,9 +47,33 @@ type envelopeMeta struct {
 	NextCursor string `json:"nextCursor,omitempty"`
 }
 
-// doRequest is the workhorse: builds the request, attaches the bearer,
-// parses the envelope, and decodes the data slot into `out` (pointer).
-// `out == nil` means "ignore body" (used by void DELETEs).
+func isAppRoute(path string) bool {
+	return path == "/api/v1/app" || strings.HasPrefix(path, "/api/v1/app/")
+}
+
+// apigenRequest is the call behind Client.API (api_generated.go): the same
+// credentials and envelope handling as every resource method.
+func (c *Client) apigenRequest(ctx context.Context, method, path string, query url.Values, body map[string]any) (json.RawMessage, error) {
+	return c.Do(ctx, method, path, query, body)
+}
+
+// Do sends one request to any API path with the credential its route takes and
+// returns the envelope's data as JSON. body (nil for none) is sent as JSON.
+func (c *Client) Do(ctx context.Context, method, path string, query url.Values, body any) (json.RawMessage, error) {
+	opts := requestOptions{query: query}
+	if m, ok := body.(map[string]any); !ok || m != nil {
+		opts.body = body
+	}
+	var out json.RawMessage
+	if err := c.doRequest(ctx, strings.ToUpper(method), path, opts, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// doRequest is the workhorse: builds the request, attaches the credential the
+// route takes, parses the envelope, and decodes the data slot into `out`
+// (pointer). `out == nil` means "ignore body" (used by void DELETEs).
 func (c *Client) doRequest(
 	ctx context.Context,
 	method, path string,
@@ -60,25 +85,47 @@ func (c *Client) doRequest(
 		u += "?" + opts.query.Encode()
 	}
 
-	var bodyReader io.Reader
+	var sent []byte
 	if opts.body != nil {
-		raw, err := json.Marshal(opts.body)
+		b, err := json.Marshal(opts.body)
 		if err != nil {
 			return newErr("SERIALIZE_FAILED", err.Error())
 		}
-		bodyReader = bytes.NewReader(raw)
+		sent = b
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, u, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, method, u, bytes.NewReader(sent))
 	if err != nil {
 		return newErr("REQUEST_BUILD_FAILED", err.Error())
+	}
+	if sent == nil {
+		req.Body = http.NoBody
+		req.ContentLength = 0
 	}
 	req.Header.Set("Accept", "application/json")
 	if opts.body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if opts.authToken != "" {
+	if c.workspaceID != "" {
+		req.Header.Set("X-Huudis-Workspace-Id", c.workspaceID)
+	}
+	switch {
+	case isAppRoute(path):
+		// The app-to-app surface takes the OIDC client's own credentials only.
+		if c.ClientID == "" || c.ClientSecret == "" {
+			return newErr("MISSING_CLIENT_CREDENTIALS",
+				"/api/v1/app/* authenticates as your OIDC app: set ClientOptions.ClientID + ClientSecret (or HUUDIS_CLIENT_ID + HUUDIS_CLIENT_SECRET)")
+		}
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(c.ClientID+":"+c.ClientSecret)))
+	case opts.authToken != "":
 		req.Header.Set("Authorization", "Bearer "+opts.authToken)
+	case c.token != "":
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	case c.accessKeyID != "" && c.secretAccessKey != "":
+		// Sign exactly the target the request line carries, and the bytes sent.
+		authorization, date := SignRequest(c.accessKeyID, c.secretAccessKey, method, req.URL.RequestURI(), sent, c.now())
+		req.Header.Set("Authorization", authorization)
+		req.Header.Set("X-Huudis-Date", date)
 	}
 
 	res, err := c.HTTP.Do(req)
@@ -91,7 +138,9 @@ func (c *Client) doRequest(
 	// 204 / empty body: success, nothing to decode.
 	if len(bytes.TrimSpace(raw)) == 0 {
 		if res.StatusCode >= 400 {
-			return newErr("HTTP_ERROR", fmt.Sprintf("HTTP %d", res.StatusCode))
+			e := newErr("HTTP_ERROR", fmt.Sprintf("HTTP %d", res.StatusCode))
+			e.Status = res.StatusCode
+			return e
 		}
 		return nil
 	}
@@ -117,7 +166,12 @@ func (c *Client) doRequest(
 			if code == "" {
 				code = "UNKNOWN"
 			}
-			return newErr(code, env.Error.Message)
+			e := newErr(code, env.Error.Message)
+			e.Status = res.StatusCode
+			if env.Meta != nil {
+				e.RequestID = env.Meta.RequestID
+			}
+			return e
 		}
 		if out == nil {
 			return nil
@@ -156,7 +210,9 @@ func (c *Client) doRequest(
 				msg = e
 			}
 		}
-		return newErr(code, msg)
+		e := newErr(code, msg)
+		e.Status = res.StatusCode
+		return e
 	}
 
 	// 2xx with no envelope (rare — direct JSON). Decode straight into out.

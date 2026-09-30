@@ -2,14 +2,15 @@
 
 Official Go SDK for [Huudis](https://huudis.com).
 
-`v0.4.0` — full admin API parity with the Node + Python SDKs. Keeps the
-v0.2.0 auth surface (`VerifyAccessToken`, `Client.ExchangeCode`,
-`Client.AuthzCheck`, webhook signature helpers) unchanged.
+`v0.5.0` — `client.API` (every API route, generated from the API spec), IAM
+access keys and OIDC client credentials, on top of the v0.4.0 admin resources
+and the v0.2.0 auth surface (`VerifyAccessToken`, `Client.ExchangeCode`,
+`Client.AuthzCheck`, webhook signature helpers), all unchanged.
 
 ## Install
 
 ```bash
-go get github.com/hachimi-cat/huudis-go@v0.4.0
+go get github.com/hachimi-cat/huudis-go@v0.5.0
 ```
 
 ## Quickstart
@@ -134,6 +135,42 @@ Namespaces on `Client`:
 `IAM`, `IdentityProviders`, `AssumedSessions`, `Authz`, `Workspaces`,
 `EndUsers`, `MFA`, `OidcClients`, `ConnectedApps`, `Services`,
 `WebhookSubscriptions`, `Billing`, `Account` (`.Sessions`, `.Linked`).
+
+## Every route: `client.API`
+
+`client.API` has one method per Huudis API route, generated from the API spec: path
+parameters as arguments, then an `*<Method>Args` with the query and body fields
+(optional fields are pointers — `huudis.Ptr(v)`; `Body` passes the whole JSON body).
+Each returns the response's `data` as `json.RawMessage`, or an `*huudis.Error` with the
+API's error code, HTTP status and request id.
+
+```go
+c, err := huudis.NewClient(huudis.ClientOptions{
+	Issuer:          "https://huudis.com",
+	AccessKeyID:     os.Getenv("HUUDIS_ACCESS_KEY_ID"),
+	SecretAccessKey: os.Getenv("HUUDIS_SECRET_ACCESS_KEY"),
+	WorkspaceID:     "acc_…", // optional: the workspace to act in
+})
+users, err := c.API.IamUsers(ctx)
+_, err = c.API.IamCreateGroups(ctx, &huudis.IamCreateGroupsArgs{Name: "On call", Description: huudis.Ptr("pager")})
+```
+
+## Credentials
+
+Every call — `client.API` and the admin resources — carries the credential its route
+group takes:
+
+| Routes | Credential | ClientOptions (environment) |
+|---|---|---|
+| `/api/v1/app/*` | Your OIDC app's client credentials (HTTP Basic) | `ClientID` + `ClientSecret` (`HUUDIS_CLIENT_ID` + `HUUDIS_CLIENT_SECRET`) |
+| Everything else a signed-in person may call | A per-call `RequestAuth{AuthToken}`, else the person's bearer token | `Token` (`HUUDIS_TOKEN`) |
+| `/account/*`, `/iam/*`, `/authz/*` for programs (when there is no token) | An IAM access key: each request signed `Huudis-HMAC-SHA256`; acts as the key's user within that user's IAM policies | `AccessKeyID` + `SecretAccessKey` (`HUUDIS_ACCESS_KEY_ID` + `HUUDIS_SECRET_ACCESS_KEY`) |
+
+Routes only a signed-in person may call (password, sessions, account deletion, adding
+members, …) refuse a key with `PERSON_ONLY`, and a key is refused (`ACCESS_DENIED`) until
+a policy attached to its user allows the route's action. See
+<https://huudis.com/docs/api/authentication>. `huudis.SignRequest` signs a request you
+build yourself; `Client.Do` sends any path with the same credentials.
 
 ## What's in the box
 
