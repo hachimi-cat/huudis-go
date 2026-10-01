@@ -1812,6 +1812,9 @@ type OpsEndUsersImpersonateArgs struct {
 	// DurationSeconds is "durationSeconds" in the body.
 	DurationSeconds *int `json:"durationSeconds,omitempty"`
 
+	// Reason is "reason" in the body.
+	Reason *string `json:"reason,omitempty"`
+
 	// Body is the whole JSON body, for what the fields above do not cover; the fields
 	// that are set replace its keys.
 	Body map[string]any `json:"-"`
@@ -1825,6 +1828,9 @@ func (a *GeneratedAPI) OpsEndUsersImpersonate(ctx context.Context, id string, p 
 	payload := apigenBody(p.Body)
 	if p.DurationSeconds != nil {
 		payload["durationSeconds"] = *p.DurationSeconds
+	}
+	if p.Reason != nil {
+		payload["reason"] = *p.Reason
 	}
 	path := "/api/v1/ops/end-users/" + url.PathEscape(id) + "/impersonate"
 	return a.c.apigenRequest(ctx, "POST", path, nil, payload)

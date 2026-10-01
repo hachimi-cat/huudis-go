@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+- `OpsEndUsersImpersonateArgs` has `Reason`; the audit log and the `huudis.ops.impersonation_*` webhook events carry it.
+- Huudis now delivers every webhook event its catalog lists (they were reserved): verify them with `VerifyWebhookSignature` as before; see /docs/api/webhooks for who receives which.
+
 ## 0.6.0
 - A route read by id next to its list is named `get` + the list's name: `client.API.AccountGetWebhookSubscriptions` (was `client.API.AccountWebhookSubscriptions2`), `client.API.IamGetGroups` (was `client.API.IamGroups2`), `client.API.IamGetPolicies` (was `client.API.IamPolicies2`), `client.API.IamGetRoles` (was `client.API.IamRoles2`), `client.API.IamGetServiceAccounts` (was `client.API.IamServiceAccounts2`), `client.API.OpsGetEndUsers` (was `client.API.OpsEndUsers2`). Each old name stays as a deprecated alias.
 
