@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.0
+- A route read by id next to its list is named `get` + the list's name: `client.API.AccountGetWebhookSubscriptions` (was `client.API.AccountWebhookSubscriptions2`), `client.API.IamGetGroups` (was `client.API.IamGroups2`), `client.API.IamGetPolicies` (was `client.API.IamPolicies2`), `client.API.IamGetRoles` (was `client.API.IamRoles2`), `client.API.IamGetServiceAccounts` (was `client.API.IamServiceAccounts2`), `client.API.OpsGetEndUsers` (was `client.API.OpsEndUsers2`). Each old name stays as a deprecated alias.
+
 ## 0.5.0
 - The source now lives in the Huudis monorepo (`sdk/go`), mirrored to github.com/hachimi-cat/huudis-go; this release is v0.4.0 plus the below — nothing removed or renamed.
 - `client.API`: every feature route of the Huudis API, one method each, generated from the API spec (`scripts/apigen.sh`): `client.API.<Area><Action>(ctx, …)`.

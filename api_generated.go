@@ -293,6 +293,12 @@ func (a *GeneratedAPI) AccountEmailChange(ctx context.Context, p *AccountEmailCh
 	return a.c.apigenRequest(ctx, "POST", "/api/v1/account/email-change", nil, payload)
 }
 
+// AccountGetWebhookSubscriptions calls GET /api/v1/account/webhook-subscriptions/{id}: Get a webhook subscription.
+func (a *GeneratedAPI) AccountGetWebhookSubscriptions(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/account/webhook-subscriptions/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
 // AccountLinkedAccounts calls GET /api/v1/account/linked-accounts: List linked accounts.
 func (a *GeneratedAPI) AccountLinkedAccounts(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/account/linked-accounts", nil, nil)
@@ -586,12 +592,6 @@ func (a *GeneratedAPI) AccountUpdateWorkspaces(ctx context.Context, id string, p
 // AccountWebhookSubscriptions calls GET /api/v1/account/webhook-subscriptions: List webhook subscriptions.
 func (a *GeneratedAPI) AccountWebhookSubscriptions(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/account/webhook-subscriptions", nil, nil)
-}
-
-// AccountWebhookSubscriptions2 calls GET /api/v1/account/webhook-subscriptions/{id}: Get a webhook subscription.
-func (a *GeneratedAPI) AccountWebhookSubscriptions2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/account/webhook-subscriptions/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
 }
 
 // AccountWebhookSubscriptionsDeliveriesArgs are the inputs of GeneratedAPI.AccountWebhookSubscriptionsDeliveries.
@@ -1335,15 +1335,33 @@ func (a *GeneratedAPI) IamDeleteUsers(ctx context.Context, id string) (json.RawM
 	return a.c.apigenRequest(ctx, "DELETE", path, nil, nil)
 }
 
+// IamGetGroups calls GET /api/v1/iam/groups/{id}: Get a group.
+func (a *GeneratedAPI) IamGetGroups(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/groups/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
+// IamGetPolicies calls GET /api/v1/iam/policies/{id}: Get a policy.
+func (a *GeneratedAPI) IamGetPolicies(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/policies/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
+// IamGetRoles calls GET /api/v1/iam/roles/{id}: Get a role.
+func (a *GeneratedAPI) IamGetRoles(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/roles/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
+// IamGetServiceAccounts calls GET /api/v1/iam/service-accounts/{id}: Get a service account.
+func (a *GeneratedAPI) IamGetServiceAccounts(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/service-accounts/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
 // IamGroups calls GET /api/v1/iam/groups: List groups.
 func (a *GeneratedAPI) IamGroups(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/groups", nil, nil)
-}
-
-// IamGroups2 calls GET /api/v1/iam/groups/{id}: Get a group.
-func (a *GeneratedAPI) IamGroups2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/iam/groups/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
 }
 
 // IamIdentityProviders calls GET /api/v1/iam/identity-providers: List identity providers.
@@ -1359,12 +1377,6 @@ func (a *GeneratedAPI) IamInvites(ctx context.Context) (json.RawMessage, error) 
 // IamPolicies calls GET /api/v1/iam/policies: List policies.
 func (a *GeneratedAPI) IamPolicies(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/policies", nil, nil)
-}
-
-// IamPolicies2 calls GET /api/v1/iam/policies/{id}: Get a policy.
-func (a *GeneratedAPI) IamPolicies2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/iam/policies/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
 }
 
 // IamPolicyAttachmentsArgs are the inputs of GeneratedAPI.IamPolicyAttachments.
@@ -1402,21 +1414,9 @@ func (a *GeneratedAPI) IamRoles(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/roles", nil, nil)
 }
 
-// IamRoles2 calls GET /api/v1/iam/roles/{id}: Get a role.
-func (a *GeneratedAPI) IamRoles2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/iam/roles/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
-}
-
 // IamServiceAccounts calls GET /api/v1/iam/service-accounts: List service accounts.
 func (a *GeneratedAPI) IamServiceAccounts(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/service-accounts", nil, nil)
-}
-
-// IamServiceAccounts2 calls GET /api/v1/iam/service-accounts/{id}: Get a service account.
-func (a *GeneratedAPI) IamServiceAccounts2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/iam/service-accounts/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
 }
 
 // IamUpdateIdentityProvidersArgs are the inputs of GeneratedAPI.IamUpdateIdentityProviders.
@@ -1807,12 +1807,6 @@ func (a *GeneratedAPI) OpsEndUsers(ctx context.Context) (json.RawMessage, error)
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/ops/end-users", nil, nil)
 }
 
-// OpsEndUsers2 calls GET /api/v1/ops/end-users/{id}: Get an end user.
-func (a *GeneratedAPI) OpsEndUsers2(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/ops/end-users/" + url.PathEscape(id)
-	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
-}
-
 // OpsEndUsersImpersonateArgs are the inputs of GeneratedAPI.OpsEndUsersImpersonate.
 type OpsEndUsersImpersonateArgs struct {
 	// DurationSeconds is "durationSeconds" in the body.
@@ -1857,6 +1851,54 @@ func (a *GeneratedAPI) OpsEndUsersStopImpersonation(ctx context.Context) (json.R
 func (a *GeneratedAPI) OpsEndUsersVerifyEmail(ctx context.Context, id string) (json.RawMessage, error) {
 	path := "/api/v1/ops/end-users/" + url.PathEscape(id) + "/verify-email"
 	return a.c.apigenRequest(ctx, "POST", path, nil, nil)
+}
+
+// OpsGetEndUsers calls GET /api/v1/ops/end-users/{id}: Get an end user.
+func (a *GeneratedAPI) OpsGetEndUsers(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/ops/end-users/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
+// AccountWebhookSubscriptions2 is the old name of AccountGetWebhookSubscriptions (GET /api/v1/account/webhook-subscriptions/{id}).
+//
+// Deprecated: use AccountGetWebhookSubscriptions.
+func (a *GeneratedAPI) AccountWebhookSubscriptions2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.AccountGetWebhookSubscriptions(ctx, id)
+}
+
+// IamGroups2 is the old name of IamGetGroups (GET /api/v1/iam/groups/{id}).
+//
+// Deprecated: use IamGetGroups.
+func (a *GeneratedAPI) IamGroups2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.IamGetGroups(ctx, id)
+}
+
+// IamPolicies2 is the old name of IamGetPolicies (GET /api/v1/iam/policies/{id}).
+//
+// Deprecated: use IamGetPolicies.
+func (a *GeneratedAPI) IamPolicies2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.IamGetPolicies(ctx, id)
+}
+
+// IamRoles2 is the old name of IamGetRoles (GET /api/v1/iam/roles/{id}).
+//
+// Deprecated: use IamGetRoles.
+func (a *GeneratedAPI) IamRoles2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.IamGetRoles(ctx, id)
+}
+
+// IamServiceAccounts2 is the old name of IamGetServiceAccounts (GET /api/v1/iam/service-accounts/{id}).
+//
+// Deprecated: use IamGetServiceAccounts.
+func (a *GeneratedAPI) IamServiceAccounts2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.IamGetServiceAccounts(ctx, id)
+}
+
+// OpsEndUsers2 is the old name of OpsGetEndUsers (GET /api/v1/ops/end-users/{id}).
+//
+// Deprecated: use OpsGetEndUsers.
+func (a *GeneratedAPI) OpsEndUsers2(ctx context.Context, id string) (json.RawMessage, error) {
+	return a.OpsGetEndUsers(ctx, id)
 }
 
 // apigenBody copies Body, so the fields set over it never change the caller's map.
