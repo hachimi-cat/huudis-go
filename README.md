@@ -166,9 +166,12 @@ group takes:
 | Everything else a signed-in person may call | A per-call `RequestAuth{AuthToken}`, else the person's bearer token | `Token` (`HUUDIS_TOKEN`) |
 | `/account/*`, `/iam/*`, `/authz/*` for programs (when there is no token) | An IAM access key: each request signed `Huudis-HMAC-SHA256`; acts as the key's user within that user's IAM policies | `AccessKeyID` + `SecretAccessKey` (`HUUDIS_ACCESS_KEY_ID` + `HUUDIS_SECRET_ACCESS_KEY`) |
 
-Routes only a signed-in person may call (password, sessions, account deletion, adding
-members, …) refuse a key with `PERSON_ONLY`, and a key is refused (`ACCESS_DENIED`) until
-a policy attached to its user allows the route's action. See
+Routes only a signed-in person may call (password, sessions, account deletion, creating
+keys, …) refuse a key with `PERSON_ONLY`, and a key is refused (`ACCESS_DENIED`) until
+a policy attached to its user allows the route's action. Members, invites, SSO identity
+providers and member password resets need the action named in the policy (no wildcard);
+owners are emailed an undo, or must approve first — the call then returns
+`approvalRequired` and the same call runs once an owner approved it. See
 <https://huudis.com/docs/api/authentication>. `huudis.SignRequest` signs a request you
 build yourself; `Client.Do` sends any path with the same credentials.
 

@@ -14,7 +14,7 @@ import (
 )
 
 // SDKVersion is this SDK's version.
-const SDKVersion = "0.7.0"
+const SDKVersion = "0.8.0"
 
 // Client is the high-level SDK surface: JWT verification, OIDC code
 // flow, refresh, userinfo, authz check, plus the full Huudis admin

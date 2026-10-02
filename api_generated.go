@@ -18,7 +18,7 @@ type apigenTransport interface {
 	apigenRequest(ctx context.Context, method, path string, query url.Values, body map[string]any) (json.RawMessage, error)
 }
 
-// GeneratedAPI has all 111 feature routes of the Huudis API, one method each
+// GeneratedAPI has all 118 feature routes of the Huudis API, one method each
 // (generated from the API spec). A method takes the path parameters, then an *<Method>Args
 // with the query fields (tagged query) and the JSON body fields (tagged json): required
 // fields are plain values, optional ones pointers, slices or maps that nil leaves out,
@@ -1341,6 +1341,12 @@ func (a *GeneratedAPI) IamGetGroups(ctx context.Context, id string) (json.RawMes
 	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
 }
 
+// IamGetKeyRequests calls GET /api/v1/iam/key-requests/{id}: Get a key request.
+func (a *GeneratedAPI) IamGetKeyRequests(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/key-requests/" + url.PathEscape(id)
+	return a.c.apigenRequest(ctx, "GET", path, nil, nil)
+}
+
 // IamGetPolicies calls GET /api/v1/iam/policies/{id}: Get a policy.
 func (a *GeneratedAPI) IamGetPolicies(ctx context.Context, id string) (json.RawMessage, error) {
 	path := "/api/v1/iam/policies/" + url.PathEscape(id)
@@ -1372,6 +1378,118 @@ func (a *GeneratedAPI) IamIdentityProviders(ctx context.Context) (json.RawMessag
 // IamInvites calls GET /api/v1/iam/invites: List invites.
 func (a *GeneratedAPI) IamInvites(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/invites", nil, nil)
+}
+
+// IamKeyActionsArgs are the inputs of GeneratedAPI.IamKeyActions.
+type IamKeyActionsArgs struct {
+	// Limit is "limit" in the query.
+	Limit any `query:"limit"`
+}
+
+// IamKeyActions calls GET /api/v1/iam/key-actions: List key actions.
+func (a *GeneratedAPI) IamKeyActions(ctx context.Context, p *IamKeyActionsArgs) (json.RawMessage, error) {
+	if p == nil {
+		p = &IamKeyActionsArgs{}
+	}
+	q := url.Values{}
+	if p.Limit != nil {
+		q.Set("limit", apigenQueryValue(p.Limit))
+	}
+	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/key-actions", q, nil)
+}
+
+// IamKeyActionsUndoArgs are the inputs of GeneratedAPI.IamKeyActionsUndo.
+type IamKeyActionsUndoArgs struct {
+	// RevokeKey is "revokeKey" in the body.
+	RevokeKey *bool `json:"revokeKey,omitempty"`
+
+	// Body is the whole JSON body, for what the fields above do not cover; the fields
+	// that are set replace its keys.
+	Body map[string]any `json:"-"`
+}
+
+// IamKeyActionsUndo calls POST /api/v1/iam/key-actions/{id}/undo: Undo a key action.
+func (a *GeneratedAPI) IamKeyActionsUndo(ctx context.Context, id string, p *IamKeyActionsUndoArgs) (json.RawMessage, error) {
+	if p == nil {
+		p = &IamKeyActionsUndoArgs{}
+	}
+	payload := apigenBody(p.Body)
+	if p.RevokeKey != nil {
+		payload["revokeKey"] = *p.RevokeKey
+	}
+	path := "/api/v1/iam/key-actions/" + url.PathEscape(id) + "/undo"
+	return a.c.apigenRequest(ctx, "POST", path, nil, payload)
+}
+
+// IamKeyRequestsArgs are the inputs of GeneratedAPI.IamKeyRequests.
+type IamKeyRequestsArgs struct {
+	// Limit is "limit" in the query.
+	Limit any `query:"limit"`
+
+	// Status is "status" in the query.
+	Status any `query:"status"`
+}
+
+// IamKeyRequests calls GET /api/v1/iam/key-requests: List key requests.
+func (a *GeneratedAPI) IamKeyRequests(ctx context.Context, p *IamKeyRequestsArgs) (json.RawMessage, error) {
+	if p == nil {
+		p = &IamKeyRequestsArgs{}
+	}
+	q := url.Values{}
+	if p.Limit != nil {
+		q.Set("limit", apigenQueryValue(p.Limit))
+	}
+	if p.Status != nil {
+		q.Set("status", apigenQueryValue(p.Status))
+	}
+	return a.c.apigenRequest(ctx, "GET", "/api/v1/iam/key-requests", q, nil)
+}
+
+// IamKeyRequestsApproveArgs are the inputs of GeneratedAPI.IamKeyRequestsApprove.
+type IamKeyRequestsApproveArgs struct {
+	// ChallengeToken is "challengeToken" in the body, required.
+	ChallengeToken string `json:"challengeToken"`
+
+	// Code is "code" in the body, required.
+	Code string `json:"code"`
+
+	// Body is the whole JSON body, for what the fields above do not cover; the fields
+	// that are set replace its keys.
+	Body map[string]any `json:"-"`
+}
+
+// IamKeyRequestsApprove calls POST /api/v1/iam/key-requests/{id}/approve: Approve a key request with the code from its challenge.
+func (a *GeneratedAPI) IamKeyRequestsApprove(ctx context.Context, id string, p *IamKeyRequestsApproveArgs) (json.RawMessage, error) {
+	if p == nil {
+		p = &IamKeyRequestsApproveArgs{}
+	}
+	payload := apigenBody(p.Body)
+	if p.ChallengeToken != "" {
+		payload["challengeToken"] = p.ChallengeToken
+	}
+	if p.Code != "" {
+		payload["code"] = p.Code
+	}
+	if _, ok := payload["challengeToken"]; !ok {
+		return nil, apigenMissing("IamKeyRequestsApprove", "ChallengeToken")
+	}
+	if _, ok := payload["code"]; !ok {
+		return nil, apigenMissing("IamKeyRequestsApprove", "Code")
+	}
+	path := "/api/v1/iam/key-requests/" + url.PathEscape(id) + "/approve"
+	return a.c.apigenRequest(ctx, "POST", path, nil, payload)
+}
+
+// IamKeyRequestsChallenge calls POST /api/v1/iam/key-requests/{id}/challenge: Start approving a key request: a second-factor challenge for the signed-in owner (an emailed code is sent when they have an email factor).
+func (a *GeneratedAPI) IamKeyRequestsChallenge(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/key-requests/" + url.PathEscape(id) + "/challenge"
+	return a.c.apigenRequest(ctx, "POST", path, nil, nil)
+}
+
+// IamKeyRequestsDeny calls POST /api/v1/iam/key-requests/{id}/deny: Deny a key request.
+func (a *GeneratedAPI) IamKeyRequestsDeny(ctx context.Context, id string) (json.RawMessage, error) {
+	path := "/api/v1/iam/key-requests/" + url.PathEscape(id) + "/deny"
+	return a.c.apigenRequest(ctx, "POST", path, nil, nil)
 }
 
 // IamPolicies calls GET /api/v1/iam/policies: List policies.
