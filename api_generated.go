@@ -18,7 +18,7 @@ type apigenTransport interface {
 	apigenRequest(ctx context.Context, method, path string, query url.Values, body map[string]any) (json.RawMessage, error)
 }
 
-// GeneratedAPI has all 118 feature routes of the Huudis API, one method each
+// GeneratedAPI has all 116 feature routes of the Huudis API, one method each
 // (generated from the API spec). A method takes the path parameters, then an *<Method>Args
 // with the query fields (tagged query) and the JSON body fields (tagged json): required
 // fields are plain values, optional ones pointers, slices or maps that nil leaves out,
@@ -1925,35 +1925,6 @@ func (a *GeneratedAPI) OpsEndUsers(ctx context.Context) (json.RawMessage, error)
 	return a.c.apigenRequest(ctx, "GET", "/api/v1/ops/end-users", nil, nil)
 }
 
-// OpsEndUsersImpersonateArgs are the inputs of GeneratedAPI.OpsEndUsersImpersonate.
-type OpsEndUsersImpersonateArgs struct {
-	// DurationSeconds is "durationSeconds" in the body.
-	DurationSeconds *int `json:"durationSeconds,omitempty"`
-
-	// Reason is "reason" in the body.
-	Reason *string `json:"reason,omitempty"`
-
-	// Body is the whole JSON body, for what the fields above do not cover; the fields
-	// that are set replace its keys.
-	Body map[string]any `json:"-"`
-}
-
-// OpsEndUsersImpersonate calls POST /api/v1/ops/end-users/{id}/impersonate: Impersonate an end user.
-func (a *GeneratedAPI) OpsEndUsersImpersonate(ctx context.Context, id string, p *OpsEndUsersImpersonateArgs) (json.RawMessage, error) {
-	if p == nil {
-		p = &OpsEndUsersImpersonateArgs{}
-	}
-	payload := apigenBody(p.Body)
-	if p.DurationSeconds != nil {
-		payload["durationSeconds"] = *p.DurationSeconds
-	}
-	if p.Reason != nil {
-		payload["reason"] = *p.Reason
-	}
-	path := "/api/v1/ops/end-users/" + url.PathEscape(id) + "/impersonate"
-	return a.c.apigenRequest(ctx, "POST", path, nil, payload)
-}
-
 // OpsEndUsersRevoke calls POST /api/v1/ops/end-users/{id}/revoke: Revoke an end user.
 func (a *GeneratedAPI) OpsEndUsersRevoke(ctx context.Context, id string) (json.RawMessage, error) {
 	path := "/api/v1/ops/end-users/" + url.PathEscape(id) + "/revoke"
@@ -1969,12 +1940,6 @@ func (a *GeneratedAPI) OpsEndUsersSendPasswordReset(ctx context.Context, id stri
 // OpsEndUsersStopImpersonation calls POST /api/v1/ops/end-users/stop-impersonation: Create a stop impersonation.
 func (a *GeneratedAPI) OpsEndUsersStopImpersonation(ctx context.Context) (json.RawMessage, error) {
 	return a.c.apigenRequest(ctx, "POST", "/api/v1/ops/end-users/stop-impersonation", nil, nil)
-}
-
-// OpsEndUsersVerifyEmail calls POST /api/v1/ops/end-users/{id}/verify-email: Verify email an end user.
-func (a *GeneratedAPI) OpsEndUsersVerifyEmail(ctx context.Context, id string) (json.RawMessage, error) {
-	path := "/api/v1/ops/end-users/" + url.PathEscape(id) + "/verify-email"
-	return a.c.apigenRequest(ctx, "POST", path, nil, nil)
 }
 
 // OpsGetEndUsers calls GET /api/v1/ops/end-users/{id}: Get an end user.
